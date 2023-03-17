@@ -1,4 +1,6 @@
 const path = require("path");
+const fs = require("fs");
+const https = require("https");
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -8,12 +10,14 @@ const MongoDBStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
 const flash = require("connect-flash");
 const multer = require("multer");
+const helmet = require("helmet");
+const compression = require("compression");
+const morgan = require("morgan");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
 
-const MONGODB_URI =
-  "mongodb://loveleen:loveleen@ac-rhqj311-shard-00-00.rdev95m.mongodb.net:27017,ac-rhqj311-shard-00-01.rdev95m.mongodb.net:27017,ac-rhqj311-shard-00-02.rdev95m.mongodb.net:27017/shop?ssl=true&replicaSet=atlas-yvq2ae-shard-0&authSource=admin&retryWrites=true&w=majority";
+const MONGODB_URI = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@ac-rhqj311-shard-00-00.rdev95m.mongodb.net:27017,ac-rhqj311-shard-00-01.rdev95m.mongodb.net:27017,ac-rhqj311-shard-00-02.rdev95m.mongodb.net:27017/${process.env.MONGO_DEFAULT_DATABASE}?ssl=true&replicaSet=atlas-yvq2ae-shard-0&authSource=admin&retryWrites=true&w=majority`;
 
 const app = express();
 const store = new MongoDBStore({
@@ -21,6 +25,9 @@ const store = new MongoDBStore({
   collection: "sessions",
 });
 const csrfProtection = csrf();
+
+const privateKey = fs.readFileSync("server.key");
+const certificate = fs.readFileSync("server.cert");
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -50,6 +57,11 @@ const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, "access.log"),
+  { flags: "a" }
+);
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
@@ -66,6 +78,21 @@ app.use(
 );
 app.use(csrfProtection);
 app.use(flash());
+app.use(morgan("combined", { stream: accessLogStream })); // for keeping log files
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "default-src": ["'self'"],
+      "script-src": ["'self'", "'unsafe-inline'", "js.stripe.com"],
+      "style-src": ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      "frame-src": ["'self'", "js.stripe.com"],
+      "font-src": ["'self'", "fonts.googleapis.com", "fonts.gstatic.com"],
+    },
+  })
+);
+
+app.use(compression()); //reduce the size of asset like css js - not for images
 
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
@@ -109,7 +136,11 @@ app.use((error, req, res, next) => {
 mongoose
   .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then((result) => {
-    app.listen(3000);
+    // https
+    //   .createServer({ key: privateKey, cert: certificate }, app)
+    //   .listen(process.env.PORT || 3000);
+
+    app.listen(process.env.PORT || 3000);
   })
   .catch((err) => {
     console.log(err);

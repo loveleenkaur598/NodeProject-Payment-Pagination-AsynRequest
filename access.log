@@ -1,0 +1,4 @@
+::1 - - [17/Mar/2023:19:14:29 +0000] "GET /orders HTTP/1.1" 200 - "http://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+::1 - - [17/Mar/2023:19:14:31 +0000] "GET /products HTTP/1.1" 200 - "http://localhost:3000/orders" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+::1 - - [17/Mar/2023:19:50:02 +0000] "GET /products HTTP/1.1" 200 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+::1 - - [17/Mar/2023:19:50:03 +0000] "GET /favicon.ico HTTP/1.1" 404 - "https://localhost:3000/products" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
